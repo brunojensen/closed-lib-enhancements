@@ -20,7 +20,6 @@ public class EnhanceableEntry extends JarEntry {
         super(ze);
     }
 
-
     public String getSimpleName() {
         final String[] splitted = super.getName().split(DIRECTORY_SEPARATOR);
         return splitted[splitted.length - 1].replace(CLASS_SUFFIX, EMPTY);
@@ -29,6 +28,14 @@ public class EnhanceableEntry extends JarEntry {
     @Override
     public String getName() {
         return super.getName().replace(DIRECTORY_SEPARATOR, ".").replace(CLASS_SUFFIX, EMPTY);
+    }
+
+    public boolean isClassFile() {
+        return super.getName().endsWith(CLASS_SUFFIX);
+    }
+
+    public String getJarName() {
+        return super.getName();
     }
 
 }

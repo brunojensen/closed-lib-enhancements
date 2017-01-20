@@ -17,9 +17,9 @@ public class EnhanceableFile extends JarFile {
     private Artifact artifact;
     public static final String CLASS_SUFFIX = ".class";
 
-
-    public EnhanceableFile(final Artifact artifact) throws IOException {
+    public EnhanceableFile(final Artifact artifact, final Set<String> exclusions) throws IOException {
         super(artifact.getFile());
+        this.exclusions = exclusions;
         this.artifact = artifact;
     }
 
@@ -28,28 +28,16 @@ public class EnhanceableFile extends JarFile {
         final List<EnhanceableEntry> enhanceableEntries = new ArrayList<EnhanceableEntry>(0);
         while (entries.hasMoreElements()) {
             final JarEntry entry = entries.nextElement();
-            if (this.isClassFile(entry) && !this.isExcluded(entry)) {
-                enhanceableEntries.add(new EnhanceableEntry(entry));
+            final EnhanceableEntry enhanceableEntry = new EnhanceableEntry(entry);
+            if (enhanceableEntry.isClassFile() && !this.isExcluded(enhanceableEntry)) {
+                enhanceableEntries.add(enhanceableEntry);
             }
         }
         return enhanceableEntries;
     }
 
-    public boolean isClassFile(final JarEntry entry) {
-        return entry.getName().endsWith(CLASS_SUFFIX);
-    }
-
-
-    private boolean isExcluded(final JarEntry entry) {
+    private boolean isExcluded(final EnhanceableEntry entry) {
         return exclusions != null && exclusions.contains(entry.getName());
-    }
-
-    public Set<String> getExclusions() {
-        return exclusions;
-    }
-
-    public void setExclusions(Set<String> exclusions) {
-        this.exclusions = exclusions;
     }
 
     public Artifact getArtifact() {
