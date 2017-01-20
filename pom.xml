@@ -9,8 +9,8 @@
 	<url>http://kilian.solutions</url>
 
 	<modules>
-		<module>closed-bean-builder-generator-maven-plugin</module>
 		<module>closed-bean-enhancements-core</module>
+		<module>closed-bean-builder-generator-maven-plugin</module>
 	</modules>
 
 	<build>

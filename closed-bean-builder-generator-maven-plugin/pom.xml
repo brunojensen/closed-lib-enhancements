@@ -16,7 +16,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>solutions.kilian.legacy</groupId>
-			<artifactId>closed-bean-builder-generator-core</artifactId>
+			<artifactId>closed-bean-enhancements-core</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>

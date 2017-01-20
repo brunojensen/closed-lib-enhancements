@@ -24,10 +24,5 @@
 			<artifactId>aether-util</artifactId>
 			<version>1.8</version>
 		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<version>${project.version}</version>
-			<artifactId>closed-bean-builder-generator-core</artifactId>
-		</dependency>
 	</dependencies>
 </project>
