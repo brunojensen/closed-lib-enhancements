@@ -7,6 +7,7 @@ public class EnhanceableEntry extends JarEntry {
     private static final String EMPTY = "";
     public static final String DIRECTORY_SEPARATOR = "/";
     private static final String CLASS_SUFFIX = ".class";
+    private byte[] byteCode;
 
     public EnhanceableEntry(JarEntry je) {
         super(je);
@@ -25,8 +26,7 @@ public class EnhanceableEntry extends JarEntry {
         return splitted[splitted.length - 1].replace(CLASS_SUFFIX, EMPTY);
     }
 
-    @Override
-    public String getName() {
+    public String getClearedName() {
         return super.getName().replace(DIRECTORY_SEPARATOR, ".").replace(CLASS_SUFFIX, EMPTY);
     }
 
@@ -36,6 +36,14 @@ public class EnhanceableEntry extends JarEntry {
 
     public String getJarName() {
         return super.getName();
+    }
+
+    public byte[] getByteCode() {
+        return byteCode;
+    }
+
+    public void setByteCode(byte[] byteCode) {
+        this.byteCode = byteCode;
     }
 
 }

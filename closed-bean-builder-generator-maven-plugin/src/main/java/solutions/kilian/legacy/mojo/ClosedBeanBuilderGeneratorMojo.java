@@ -1,6 +1,8 @@
 package solutions.kilian.legacy.mojo;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -17,10 +19,10 @@ import solutions.kilian.legacy.parameter.ClosedArtifact;
 public class ClosedBeanBuilderGeneratorMojo extends AbstractEnhancementMojo {
 
     @Parameter(alias = "closed-artifacts")
-    private List<ClosedArtifact> closedArtifacts;
+    private List<ClosedArtifact> closedArtifacts = new ArrayList<ClosedArtifact>();
 
     @Parameter
-    private Set<String> exclusions;
+    private Set<String> exclusions = new HashSet<String>();
 
     @Override
     public void execute() throws MojoExecutionException {

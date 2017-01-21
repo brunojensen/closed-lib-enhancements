@@ -3,17 +3,16 @@ package solutions.kilian.legacy.enhancement;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.maven.plugin.logging.Log;
+import org.sonatype.aether.artifact.Artifact;
+import org.sonatype.aether.util.artifact.DefaultArtifact;
+
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.CtNewMethod;
 import javassist.NotFoundException;
-
-import org.apache.maven.plugin.logging.Log;
-import org.sonatype.aether.artifact.Artifact;
-import org.sonatype.aether.util.artifact.DefaultArtifact;
-
 import solutions.kilian.legacy.entry.EnhanceableEntry;
 import solutions.kilian.legacy.file.EnhanceableFile;
 import solutions.kilian.legacy.file.JarHandler;
@@ -39,27 +38,29 @@ public class BuilderEnhancement implements Enhancement {
             pool.appendPathList(enhanceableFile.getName());
 
             final ClassPool classPool = new ClassPool();
-            String filePath = enhanceableFile.getArtifact().getFile().getPath();
-            classPool.appendClassPath(filePath);
+            classPool.appendClassPath(enhanceableFile.getArtifact().getFile().getPath());
             final List<EnhanceableEntry> entries = enhanceableFile.getEntries();
             log.info("Enhanceable entries:");
-            final JarHandler jarHandler = new JarHandler();
             for (final EnhanceableEntry entry : entries) {
                 log.info(entry.getSimpleName());
-                CtClass point = pool.get(entry.getName());
+                final CtClass ctClass = pool.get(entry.getClearedName());
                 try {
-                    CtMethod m = CtNewMethod.make("public void xmove() {  }", point);
-                    point.addMethod(m);
-                    point.writeFile();
-                    jarHandler.replaceJarFile(filePath, point.toBytecode(), entry.getJarName());
-                } catch (CannotCompileException e) {
+
+                    entry.setByteCode(ctClass.toBytecode());
+                    final CtMethod m = CtNewMethod.make("public void xmove() {  }", ctClass);
+                    ctClass.addMethod(m);
+                    ctClass.writeFile();
+
+                } catch (final CannotCompileException e) {
                     e.printStackTrace();
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     e.printStackTrace();
                 }
             }
 
-            log.info("Enhanced file at: " + filePath);
+            final JarHandler jarHandler = new JarHandler();
+            jarHandler.replaceEntriesInJarFile(enhanceableFile);
+            log.info("Enhanced file at: " + enhanceableFile.getArtifact().getFile().getPath());
 
         } catch (final NotFoundException e) {
             log.error(e);
