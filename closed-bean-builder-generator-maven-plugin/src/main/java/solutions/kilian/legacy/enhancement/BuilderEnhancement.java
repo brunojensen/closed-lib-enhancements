@@ -1,7 +1,6 @@
 package solutions.kilian.legacy.enhancement;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.maven.plugin.logging.Log;
 import org.sonatype.aether.artifact.Artifact;
@@ -39,18 +38,12 @@ public class BuilderEnhancement implements Enhancement {
 
             final ClassPool classPool = new ClassPool();
             classPool.appendClassPath(enhanceableFile.getArtifact().getFile().getPath());
-            final List<EnhanceableEntry> entries = enhanceableFile.getEntries();
+
             log.info("Enhanceable entries:");
-            for (final EnhanceableEntry entry : entries) {
-                log.info(entry.getSimpleName());
-                final CtClass ctClass = pool.get(entry.getClearedName());
+            for (final EnhanceableEntry enhanceableEntry : enhanceableFile.getEntries()) {
+                log.info(enhanceableEntry.getSimpleName());
                 try {
-
-                    entry.setByteCode(ctClass.toBytecode());
-                    final CtMethod m = CtNewMethod.make("public void xmove() {  }", ctClass);
-                    ctClass.addMethod(m);
-                    ctClass.writeFile();
-
+                    transformClass(pool, enhanceableEntry);
                 } catch (final CannotCompileException e) {
                     e.printStackTrace();
                 } catch (final IOException e) {
@@ -67,5 +60,15 @@ public class BuilderEnhancement implements Enhancement {
         }
 
         return null;
+    }
+
+    private void transformClass(final ClassPool pool, final EnhanceableEntry enhanceableEntry)
+            throws NotFoundException, CannotCompileException, IOException {
+        final CtClass ctClass = pool.get(enhanceableEntry.getCanonicalName());
+        final CtMethod m = CtNewMethod.make("public void xmove() {  }", ctClass);
+        ctClass.addMethod(m);
+        ctClass.writeFile();
+        ctClass.defrost();
+        enhanceableEntry.setByteCode(ctClass.toBytecode());
     }
 }

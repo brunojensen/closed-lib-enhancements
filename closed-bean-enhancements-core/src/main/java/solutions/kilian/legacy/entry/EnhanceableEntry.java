@@ -4,6 +4,7 @@ import java.util.jar.JarEntry;
 import java.util.zip.ZipEntry;
 
 public class EnhanceableEntry extends JarEntry {
+    private static final String DOT = ".";
     private static final String EMPTY = "";
     public static final String DIRECTORY_SEPARATOR = "/";
     private static final String CLASS_SUFFIX = ".class";
@@ -26,8 +27,8 @@ public class EnhanceableEntry extends JarEntry {
         return splitted[splitted.length - 1].replace(CLASS_SUFFIX, EMPTY);
     }
 
-    public String getClearedName() {
-        return super.getName().replace(DIRECTORY_SEPARATOR, ".").replace(CLASS_SUFFIX, EMPTY);
+    public String getCanonicalName() {
+        return super.getName().replace(DIRECTORY_SEPARATOR, DOT).replace(CLASS_SUFFIX, EMPTY);
     }
 
     public boolean isClassFile() {
