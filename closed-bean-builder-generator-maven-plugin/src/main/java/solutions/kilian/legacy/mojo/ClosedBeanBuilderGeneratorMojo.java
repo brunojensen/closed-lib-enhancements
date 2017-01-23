@@ -29,6 +29,9 @@ public class ClosedBeanBuilderGeneratorMojo extends AbstractEnhancementMojo {
     @Parameter
     private Set<String> exclusions = new HashSet<String>();
 
+    @Parameter(defaultValue = "enhanced", alias = "artifact-suffix")
+    private String artifactSuffix;
+
     @Override
     public void execute() throws MojoExecutionException {
         for (final ClosedArtifact closedArtifact : closedArtifacts) {
@@ -56,12 +59,12 @@ public class ClosedBeanBuilderGeneratorMojo extends AbstractEnhancementMojo {
      * TODO: refatorar. Não é responsabilidade desta classe.
      */
     private Artifact generateEnhancedArtifact(final Artifact originalArtifact, final EnhanceableFile enhanceableFile) {
-        final JarWriter jarHandler = new JarWriter(getLog(), originalArtifact.getArtifactId() + "-enhanced.jar");
+        final JarWriter jarHandler = new JarWriter(getLog(), originalArtifact.getArtifactId() + "-" + artifactSuffix);
         File file = jarHandler.generateJarFileWithEntries(originalArtifact.getFile(), enhanceableFile.getEntries());
         getLog().info("Enhanced file at: " + file.getPath());
 
         DefaultArtifact defaultArtifact = new DefaultArtifact(originalArtifact.getGroupId(),
-                originalArtifact.getArtifactId() + "-enhanced", originalArtifact.getExtension(),
+                originalArtifact.getArtifactId() + "-" + artifactSuffix, originalArtifact.getExtension(),
                 originalArtifact.getVersion());
         Artifact artifact = defaultArtifact.setFile(file);
         return artifact;
