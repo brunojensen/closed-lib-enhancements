@@ -25,11 +25,8 @@ public class BuilderEnhancement implements Enhancement {
     @Override
     public void enhance(final EnhanceableFile enhanceableFile) {
         try {
-            final ClassPool pool = new ClassPool();
-            pool.appendPathList(enhanceableFile.getName());
-
             final ClassPool classPool = new ClassPool();
-            classPool.appendClassPath(enhanceableFile.getArtifact().getFile().getPath());
+            classPool.appendPathList(enhanceableFile.getName());
 
             log.info("Enhanceable entries:");
             for (final EnhanceableEntry enhanceableEntry : enhanceableFile.getEntries()) {
@@ -38,17 +35,16 @@ public class BuilderEnhancement implements Enhancement {
                     /*
                      * TODO: Desenvolver algum pattern para executar isso. Talvez mais um strategy ou decorator
                      */
-                    transformClass(pool, enhanceableEntry);
+                    transformClass(classPool, enhanceableEntry);
                 } catch (final CannotCompileException e) {
-                    e.printStackTrace();
+                    log.error(e.getMessage());
                 } catch (final IOException e) {
-                    e.printStackTrace();
+                    log.error(e.getMessage());
                 }
             }
         } catch (final NotFoundException e) {
-            log.error(e);
+            log.error(e.getMessage());
         }
-
     }
 
     private void transformClass(ClassPool pool, EnhanceableEntry enhanceableEntry) throws NotFoundException,

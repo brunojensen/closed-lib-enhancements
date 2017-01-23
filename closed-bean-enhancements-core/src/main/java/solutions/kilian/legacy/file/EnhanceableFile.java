@@ -14,14 +14,12 @@ import solutions.kilian.legacy.entry.EnhanceableEntry;
 
 public class EnhanceableFile extends JarFile {
     private Set<String> exclusions;
-    private Artifact artifact;
     public static final String CLASS_SUFFIX = ".class";
     private List<EnhanceableEntry> enhanceableEntries;
 
     public EnhanceableFile(final Artifact artifact, final Set<String> exclusions) throws IOException {
         super(artifact.getFile());
         this.exclusions = exclusions;
-        this.artifact = artifact;
     }
 
     public List<EnhanceableEntry> getEntries() {
@@ -41,14 +39,6 @@ public class EnhanceableFile extends JarFile {
 
     private boolean isExcluded(final EnhanceableEntry entry) {
         return exclusions != null && exclusions.contains(entry.getCanonicalName());
-    }
-
-    public Artifact getArtifact() {
-        return artifact;
-    }
-
-    public void setArtifact(Artifact artifact) {
-        this.artifact = artifact;
     }
 
 }

@@ -12,23 +12,29 @@ import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 
 import org.apache.maven.plugin.logging.Log;
-import org.sonatype.aether.util.artifact.DefaultArtifact;
 
 import solutions.kilian.legacy.entry.EnhanceableEntry;
 
 public class JarWriter {
     private final Log log;
     private static final byte[] READER_BUFFER = new byte[1024];
+    private String enhancedFileName;
 
-    public JarWriter(Log log) {
+    public JarWriter(Log log, String enhancedFileName) {
         this.log = log;
+        this.enhancedFileName = enhancedFileName;
     }
 
-    public void replaceEntriesInJarFile(final File originalFile, final List<EnhanceableEntry> enhanceableEntries) {
+    public File generateJarFileWithEntries(final File originalFile, final List<EnhanceableEntry> enhanceableEntries) {
         JarFile originalJarFile = null;
+        File createdFile = null;
         try {
             originalJarFile = new JarFile(originalFile);
-            FileOutputStream fileOutputStream = new FileOutputStream(new File(originalFile.getPath() + "-enhanced"));
+
+            String updatedJarPath = originalFile.getPath().substring(0,
+                    originalFile.getPath().indexOf(originalFile.getName()));
+            createdFile = new File(updatedJarPath + enhancedFileName);
+            FileOutputStream fileOutputStream = new FileOutputStream(createdFile);
             final JarOutputStream jarOutputStream = new JarOutputStream(fileOutputStream);
             try {
                 writeModifiedEntries(enhanceableEntries, jarOutputStream);
@@ -37,6 +43,7 @@ public class JarWriter {
                 log.error(exception.getMessage());
             } finally {
                 jarOutputStream.close();
+                fileOutputStream.close();
             }
         } catch (final FileNotFoundException exception) {
             log.error(exception.getMessage());
@@ -49,6 +56,8 @@ public class JarWriter {
                 log.error(exception.getMessage());
             }
         }
+
+        return createdFile;
     }
 
     private void writeRemainingEntries(final List<EnhanceableEntry> enhanceableEntries, JarFile originalJarFile,
@@ -83,13 +92,5 @@ public class JarWriter {
                 log.error(exception.getMessage());
             }
         }
-    }
-
-    private DefaultArtifact generateArtifactWithNewName(final EnhanceableFile enhanceableFile) {
-        final DefaultArtifact artifact = new DefaultArtifact(enhanceableFile.getArtifact().getGroupId(),
-                enhanceableFile.getArtifact().getArtifactId() + "-enhanced", enhanceableFile
-                        .getArtifact()
-                            .getExtension(), enhanceableFile.getArtifact().getVersion());
-        return artifact;
     }
 }
