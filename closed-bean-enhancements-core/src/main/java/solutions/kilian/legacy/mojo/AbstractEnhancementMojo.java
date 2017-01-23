@@ -10,12 +10,13 @@ import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.sonatype.aether.RepositorySystem;
 import org.sonatype.aether.RepositorySystemSession;
-import org.sonatype.aether.artifact.Artifact;
 import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.resolution.ArtifactRequest;
 import org.sonatype.aether.resolution.ArtifactResolutionException;
 import org.sonatype.aether.resolution.ArtifactResult;
 import org.sonatype.aether.util.artifact.DefaultArtifact;
+
+import solutions.kilian.legacy.file.EnhanceableFile;
 
 public abstract class AbstractEnhancementMojo extends AbstractMojo {
 
@@ -44,16 +45,15 @@ public abstract class AbstractEnhancementMojo extends AbstractMojo {
 
         try {
             final ArtifactResult result = repositorySystem.resolveArtifact(repositorySystemSession, artifactRequest);
-            getLog().info(
-                    "Resolved artifact " + result.getArtifact() + " to " + result.getArtifact().getFile() + " from "
-                            + result.getRepository());
+            getLog().info("Resolved artifact " + result.getArtifact() + " to " + result.getArtifact().getFile()
+                    + " from " + result.getRepository());
             return result;
         } catch (final ArtifactResolutionException e) {
             throw new MojoExecutionException(e.getMessage(), e);
         }
     }
 
-    protected void publishArtifact(Artifact enhancedArtifact) {
+    protected void publishArtifact(EnhanceableFile enhanceableFile) {
 
     }
 }

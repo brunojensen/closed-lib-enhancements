@@ -16,24 +16,26 @@ import solutions.kilian.legacy.entry.EnhanceableEntry;
 /*
  * TODO: Extrair jar file para fora Refatorar enhanceable entry Refatorar Enhanceable file Adicionar
  * o comportamento em file?
+ * 
+ * TODO: refatorar
  */
 public class JarHandler {
     public void replaceEntriesInJarFile(final EnhanceableFile enhanceableFile) {
         JarFile jarFile = null;
         try {
             jarFile = new JarFile(new File(enhanceableFile.getArtifact().getFile().getPath()));
-            final JarOutputStream replacedJarFile = new JarOutputStream(new FileOutputStream(
-                    new File(enhanceableFile.getArtifact().getFile().getPath() + "-enhancements")));
+            final JarOutputStream replacedJarFile = new JarOutputStream(
+                    new FileOutputStream(new File(enhanceableFile.getArtifact().getFile().getPath())));
             int bytesRead;
 
             try {
                 for (final EnhanceableEntry entry : enhanceableFile.getEntries()) {
                     try {
-                        final JarEntry jarEntry = new JarEntry(entry.getJarName());
+                        final JarEntry jarEntry = new JarEntry(entry.getName());
                         replacedJarFile.putNextEntry(jarEntry);
                         replacedJarFile.write(entry.getByteCode());
                     } catch (final Exception ex) {
-                        System.out.println(ex);
+                        System.out.println(ex.getMessage());
                     }
                 }
 
@@ -42,7 +44,7 @@ public class JarHandler {
                 final Enumeration<JarEntry> entries = jarFile.entries();
                 while (entries.hasMoreElements()) {
                     final JarEntry entry = entries.nextElement();
-                    if (!enhanceableFile.getEntries().contains(entry.getName())) {
+                    if (!enhanceableFile.getEntries().contains(new EnhanceableEntry(entry))) {
                         entryStream = jarFile.getInputStream(entry);
                         replacedJarFile.putNextEntry(entry);
                         while ((bytesRead = entryStream.read(buffer)) != -1) {

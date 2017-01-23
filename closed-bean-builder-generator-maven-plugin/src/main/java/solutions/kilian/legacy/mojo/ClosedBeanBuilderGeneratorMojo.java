@@ -13,6 +13,7 @@ import org.sonatype.aether.resolution.ArtifactResult;
 
 import solutions.kilian.legacy.enhancement.BuilderEnhancement;
 import solutions.kilian.legacy.file.EnhanceableFile;
+import solutions.kilian.legacy.file.JarHandler;
 import solutions.kilian.legacy.parameter.ClosedArtifact;
 
 @Mojo(name = "generate")
@@ -37,7 +38,14 @@ public class ClosedBeanBuilderGeneratorMojo extends AbstractEnhancementMojo {
             }
 
             getLog().info("Enhancing artifact: " + enhanceableFile.getArtifact().getArtifactId());
-            publishArtifact(new BuilderEnhancement(getLog()).enhance(enhanceableFile));
+            new BuilderEnhancement(getLog()).enhance(enhanceableFile);
+
+
+            final JarHandler jarHandler = new JarHandler();
+            jarHandler.replaceEntriesInJarFile(enhanceableFile);
+            getLog().info("Enhanced file at: " + enhanceableFile.getArtifact().getFile().getPath());
+
+            publishArtifact(enhanceableFile);
         }
     }
 
