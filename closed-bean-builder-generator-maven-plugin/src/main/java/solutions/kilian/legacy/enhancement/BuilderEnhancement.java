@@ -2,15 +2,15 @@ package solutions.kilian.legacy.enhancement;
 
 import java.io.IOException;
 
-import org.apache.maven.plugin.logging.Log;
-import org.sonatype.aether.util.artifact.DefaultArtifact;
-
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.CtNewMethod;
 import javassist.NotFoundException;
+
+import org.apache.maven.plugin.logging.Log;
+
 import solutions.kilian.legacy.entry.EnhanceableEntry;
 import solutions.kilian.legacy.file.EnhanceableFile;
 
@@ -22,26 +22,8 @@ public class BuilderEnhancement implements Enhancement {
         this.log = log;
     }
 
-
-    /*
-     * TODO: Se a entrada é um enhanceable file e a saida é um enhanceable file talvez isso aqui
-     * vire um decorator com strategy dentro dele
-     */
     @Override
     public void enhance(final EnhanceableFile enhanceableFile) {
-
-
-        /*
-         * TODO: se tudo que tenho que fazer é devolver uma artifact que é instanciado pelo
-         * enhanceablFile, talvez nao seja necessário devolve-lo. Construir uma implementação do
-         * enhanceableFile com o os maven coords modificados para não ter que devolver um artifact
-         * daqui
-         */
-        final DefaultArtifact artifact = new DefaultArtifact(enhanceableFile.getArtifact().getGroupId(),
-                enhanceableFile.getArtifact().getArtifactId(), enhanceableFile.getArtifact().getExtension(),
-                enhanceableFile.getArtifact().getVersion());
-        artifact.setFile(enhanceableFile.getArtifact().getFile());
-
         try {
             final ClassPool pool = new ClassPool();
             pool.appendPathList(enhanceableFile.getName());
@@ -54,8 +36,7 @@ public class BuilderEnhancement implements Enhancement {
                 log.info(enhanceableEntry.getCanonicalName());
                 try {
                     /*
-                     * TODO: Desenvolver algum pattern para executar isso. Talvez mais um strategy
-                     * ou decorator
+                     * TODO: Desenvolver algum pattern para executar isso. Talvez mais um strategy ou decorator
                      */
                     transformClass(pool, enhanceableEntry);
                 } catch (final CannotCompileException e) {
@@ -64,17 +45,14 @@ public class BuilderEnhancement implements Enhancement {
                     e.printStackTrace();
                 }
             }
-
         } catch (final NotFoundException e) {
             log.error(e);
         }
 
     }
 
-
-
-    private void transformClass(ClassPool pool, EnhanceableEntry enhanceableEntry)
-            throws NotFoundException, CannotCompileException, IOException {
+    private void transformClass(ClassPool pool, EnhanceableEntry enhanceableEntry) throws NotFoundException,
+            CannotCompileException, IOException {
         final CtClass ctClass = pool.get(enhanceableEntry.getCanonicalName());
         final CtMethod m = CtNewMethod.make("public void xmove() {  }", ctClass);
         ctClass.addMethod(m);
