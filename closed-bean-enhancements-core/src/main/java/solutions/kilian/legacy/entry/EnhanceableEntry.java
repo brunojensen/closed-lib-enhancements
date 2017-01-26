@@ -57,5 +57,4 @@ public class EnhanceableEntry extends JarEntry {
         return super.getName().equals(other.getName());
     }
 
-
 }

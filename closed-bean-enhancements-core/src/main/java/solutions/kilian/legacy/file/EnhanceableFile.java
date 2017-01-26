@@ -1,5 +1,6 @@
 package solutions.kilian.legacy.file;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -8,8 +9,6 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import org.sonatype.aether.artifact.Artifact;
-
 import solutions.kilian.legacy.entry.EnhanceableEntry;
 
 public class EnhanceableFile extends JarFile {
@@ -17,8 +16,8 @@ public class EnhanceableFile extends JarFile {
     public static final String CLASS_SUFFIX = ".class";
     private List<EnhanceableEntry> enhanceableEntries;
 
-    public EnhanceableFile(final Artifact artifact, final Set<String> exclusions) throws IOException {
-        super(artifact.getFile());
+    public EnhanceableFile(final File file, final Set<String> exclusions) throws IOException {
+        super(file);
         this.exclusions = exclusions;
     }
 

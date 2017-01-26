@@ -47,9 +47,8 @@ public abstract class AbstractEnhancementMojo extends AbstractMojo {
 
         try {
             final ArtifactResult result = repositorySystem.resolveArtifact(repositorySystemSession, artifactRequest);
-            getLog().info(
-                    "Resolved artifact " + result.getArtifact() + " to " + result.getArtifact().getFile() + " from "
-                            + result.getRepository());
+            getLog().info("Resolved artifact " + result.getArtifact() + " to " + result.getArtifact().getFile()
+                    + " from " + result.getRepository());
             return result;
         } catch (final ArtifactResolutionException e) {
             throw new MojoExecutionException(e.getMessage(), e);

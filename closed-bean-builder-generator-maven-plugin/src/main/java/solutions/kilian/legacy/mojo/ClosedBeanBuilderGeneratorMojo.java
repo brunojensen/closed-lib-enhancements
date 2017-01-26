@@ -16,8 +16,8 @@ import org.sonatype.aether.util.artifact.DefaultArtifact;
 
 import solutions.kilian.legacy.enhancement.BuilderEnhancement;
 import solutions.kilian.legacy.enhancement.Enhancement;
+import solutions.kilian.legacy.file.EnhaceableFileReplacer;
 import solutions.kilian.legacy.file.EnhanceableFile;
-import solutions.kilian.legacy.file.JarWriter;
 import solutions.kilian.legacy.parameter.ClosedArtifact;
 
 @Mojo(name = "generate")
@@ -41,7 +41,7 @@ public class ClosedBeanBuilderGeneratorMojo extends AbstractEnhancementMojo {
 
             EnhanceableFile enhanceableFile = null;
             try {
-                enhanceableFile = new EnhanceableFile(originalArtifact, exclusions);
+                enhanceableFile = new EnhanceableFile(originalArtifact.getFile(), exclusions);
                 info("Exclusions:", exclusions);
             } catch (final IOException ioException) {
                 getLog().error(ioException);
@@ -50,19 +50,22 @@ public class ClosedBeanBuilderGeneratorMojo extends AbstractEnhancementMojo {
             Enhancement enhancement = new BuilderEnhancement(getLog());
             enhancement.enhance(enhanceableFile);
 
-            Artifact generatedArtifact = generateEnhancedArtifact(originalArtifact, enhanceableFile);
+            Artifact generatedArtifact = generateEnhancedArtifact(originalArtifact,
+                    generateFileWithEntries(originalArtifact, enhanceableFile));
             publish(generatedArtifact);
         }
     }
 
-    /*
-     * TODO: refatorar. Não é responsabilidade desta classe.
-     */
-    private Artifact generateEnhancedArtifact(final Artifact originalArtifact, final EnhanceableFile enhanceableFile) {
-        final JarWriter jarHandler = new JarWriter(getLog(), originalArtifact.getArtifactId() + "-" + artifactSuffix);
-        File file = jarHandler.generateJarFileWithEntries(originalArtifact.getFile(), enhanceableFile.getEntries());
-        getLog().info("Enhanced file at: " + file.getPath());
+    private File generateFileWithEntries(Artifact originalArtifact, EnhanceableFile enhanceableFile)
+            throws MojoExecutionException {
+        final EnhaceableFileReplacer replacer = new EnhaceableFileReplacer(
+                originalArtifact.getArtifactId() + "-" + artifactSuffix);
+        final File file = replacer.replace(originalArtifact.getFile(), enhanceableFile.getEntries());
+        return file;
+    }
 
+    private Artifact generateEnhancedArtifact(final Artifact originalArtifact, final File file)
+            throws MojoExecutionException {
         DefaultArtifact defaultArtifact = new DefaultArtifact(originalArtifact.getGroupId(),
                 originalArtifact.getArtifactId() + "-" + artifactSuffix, originalArtifact.getExtension(),
                 originalArtifact.getVersion());

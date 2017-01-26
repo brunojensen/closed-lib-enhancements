@@ -11,21 +11,24 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 
-import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugin.MojoExecutionException;
 
 import solutions.kilian.legacy.entry.EnhanceableEntry;
 
-public class JarWriter {
-    private final Log log;
+public class EnhaceableFileReplacer {
     private static final byte[] READER_BUFFER = new byte[1024];
-    private String enhancedFileName;
+    private final String enhancedFileName;
 
-    public JarWriter(Log log, String enhancedFileName) {
-        this.log = log;
+    public EnhaceableFileReplacer(final EnhanceableFile enhanceableFile) {
+        this.enhancedFileName = enhanceableFile.getName();
+    }
+
+    public EnhaceableFileReplacer(String enhancedFileName) {
         this.enhancedFileName = enhancedFileName;
     }
 
-    public File generateJarFileWithEntries(final File originalFile, final List<EnhanceableEntry> enhanceableEntries) {
+    public File replace(final File originalFile, final List<EnhanceableEntry> enhanceableEntries)
+            throws MojoExecutionException {
         JarFile originalJarFile = null;
         File createdFile = null;
         try {
@@ -34,26 +37,24 @@ public class JarWriter {
             String updatedJarPath = originalFile.getPath().substring(0,
                     originalFile.getPath().indexOf(originalFile.getName()));
             createdFile = new File(updatedJarPath + enhancedFileName);
-            FileOutputStream fileOutputStream = new FileOutputStream(createdFile);
-            final JarOutputStream jarOutputStream = new JarOutputStream(fileOutputStream);
+            final JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(createdFile));
             try {
                 writeModifiedEntries(enhanceableEntries, jarOutputStream);
                 writeRemainingEntries(enhanceableEntries, originalJarFile, jarOutputStream);
             } catch (final Exception exception) {
-                log.error(exception.getMessage());
+                throw new MojoExecutionException(exception.getMessage(), exception.getCause());
             } finally {
                 jarOutputStream.close();
-                fileOutputStream.close();
             }
         } catch (final FileNotFoundException exception) {
-            log.error(exception.getMessage());
+            throw new MojoExecutionException(exception.getMessage(), exception.getCause());
         } catch (final IOException exception) {
-            log.error(exception.getMessage());
+            throw new MojoExecutionException(exception.getMessage(), exception.getCause());
         } finally {
             try {
                 originalJarFile.close();
             } catch (final IOException exception) {
-                log.error(exception.getMessage());
+                throw new MojoExecutionException(exception.getMessage(), exception.getCause());
             }
         }
 
@@ -63,9 +64,11 @@ public class JarWriter {
     private void writeRemainingEntries(final List<EnhanceableEntry> enhanceableEntries, JarFile originalJarFile,
             final JarOutputStream replacedJarFile) throws IOException {
         final Enumeration<JarEntry> entries = originalJarFile.entries();
+
         InputStream inputSream = null;
         while (entries.hasMoreElements()) {
             final JarEntry entry = entries.nextElement();
+
             if (!enhanceableEntries.contains(new EnhanceableEntry(entry))) {
                 inputSream = originalJarFile.getInputStream(entry);
                 replacedJarFile.putNextEntry(entry);
@@ -82,14 +85,14 @@ public class JarWriter {
     }
 
     private void writeModifiedEntries(final List<EnhanceableEntry> enhanceableEntries,
-            final JarOutputStream newJarOutputStream) {
+            final JarOutputStream newJarOutputStream) throws MojoExecutionException {
         for (final EnhanceableEntry entry : enhanceableEntries) {
             try {
                 final JarEntry jarEntry = new JarEntry(entry.getName());
                 newJarOutputStream.putNextEntry(jarEntry);
                 newJarOutputStream.write(entry.getByteCode());
             } catch (final Exception exception) {
-                log.error(exception.getMessage());
+                throw new MojoExecutionException(exception.getMessage(), exception.getCause());
             }
         }
     }
