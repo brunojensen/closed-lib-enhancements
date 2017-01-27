@@ -1,7 +1,8 @@
 package solutions.kilian.legacy.enhancement;
 
-import java.io.IOException;
+import java.util.Iterator;
 
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 
 import javassist.CannotCompileException;
@@ -16,58 +17,138 @@ import solutions.kilian.legacy.file.EnhanceableFile;
 public class BuilderEnhancement implements Enhancement {
 
     private Log log;
+    private static final String ERROR_CODE = "[ERROR]";
 
     public BuilderEnhancement(final Log log) {
         this.log = log;
     }
 
     @Override
-    public void enhance(final EnhanceableFile enhanceableFile) {
+    public void enhance(final EnhanceableFile enhanceableFile) throws MojoExecutionException {
         try {
             final ClassPool classPool = new ClassPool(true);
             classPool.appendPathList(enhanceableFile.getName());
-
             log.info("Enhanceable entries:");
             for (final EnhanceableEntry enhanceableEntry : enhanceableFile.getEntries()) {
                 log.info(enhanceableEntry.getCanonicalName());
+                final CtClass ctClass = classPool.get(enhanceableEntry.getCanonicalName());
+                byte[] bytecode = null;
+                if (!ctClass.isEnum() && !ctClass.isInterface() && !ctClass.isPrimitive()) {
+                    importPackage(classPool, ctClass.getPackageName());
+                    bytecode = transformClass(ctClass, classPool);
+                } else {
+                    bytecode = ctClass.toBytecode();
+                }
+                enhanceableEntry.setByteCode(bytecode);
+            }
+        } catch (final Exception exception) {
+            throw new MojoExecutionException(ERROR_CODE, exception);
+        }
+    }
+
+    private byte[] transformClass(CtClass ctClassToModify, ClassPool classPool) throws MojoExecutionException {
+        for (final CtMethod ctMethod : ctClassToModify.getMethods()) {
+            if (ctMethod.getName().startsWith("set")) {
+                String entityName = ctMethod.getName().substring(3);
+                CtMethod withMethod = null;
                 try {
-                    final CtClass ctClass = classPool.get(enhanceableEntry.getCanonicalName());
-                    byte[] bytecode = null;
-                    if (!ctClass.isEnum() && !ctClass.isInterface() && !ctClass.isPrimitive()) {
-                        classPool.importPackage(ctClass.getPackageName());
-                        bytecode = transformClass(ctClass).toBytecode();
-                    } else {
-                        bytecode = ctClass.toBytecode();
-                    }
-                    enhanceableEntry.setByteCode(bytecode);
-                } catch (final CannotCompileException e) {
-                    log.error(e.getMessage());
-                } catch (final IOException e) {
-                    log.error(e.getMessage());
+                    withMethod = generateMethodBodyWithBuilder(classPool, ctClassToModify, ctMethod, entityName);
+                } catch (Exception exception) {
+                    throw new MojoExecutionException(ERROR_CODE, exception);
+                }
+
+                try {
+                    ctClassToModify.addMethod(withMethod);
+                } catch (CannotCompileException exception) {
+                    throw new MojoExecutionException(ERROR_CODE, exception);
                 }
             }
-        } catch (final NotFoundException e) {
-            log.error(e.getMessage());
         }
+
+        generateBuilderConstructorMethod(ctClassToModify);
+        byte[] bytecode = null;
+        try {
+            bytecode = ctClassToModify.toBytecode();
+        } catch (Exception exception) {
+            throw new MojoExecutionException(ERROR_CODE, exception);
+        }
+        return bytecode;
     }
 
-    private CtClass transformClass(CtClass toModify) throws NotFoundException, CannotCompileException, IOException {
-        for (final CtMethod ctMethod : toModify.getMethods()) {
-            if (ctMethod.getName().startsWith("set")) {
+    private void importPackage(ClassPool classPool, String packageName) {
+        @SuppressWarnings("unchecked")
+        Iterator<String> importedPackages = classPool.getImportedPackages();
+        while (importedPackages.hasNext()) {
+            String next = (String) importedPackages.next();
+            if (next.equals(packageName)) {
+                return;
+            }
+        }
+        classPool.importPackage(packageName);
+    }
+
+    private String packageName(NotFoundException exception) {
+        String notImportedPackageName = exception.getLocalizedMessage();
+        String[] splittedName = notImportedPackageName.split("\\.");
+        return notImportedPackageName.substring(0,
+                notImportedPackageName.indexOf(splittedName[splittedName.length - 1]) - 1);
+    }
+
+    private CtMethod generateMethodBodyWithBuilder(ClassPool classPool, CtClass toModify, final CtMethod ctMethod,
+            String entityName) throws MojoExecutionException, CannotCompileException {
+        CtClass[] parameterTypes = null;
+        CtClass[] exceptionTypes = null;
+        try {
+            parameterTypes = ctMethod.getParameterTypes();
+            exceptionTypes = ctMethod.getExceptionTypes();
+        } catch (NotFoundException exception) {
+            classPool.importPackage(packageName(exception));
+            try {
+                parameterTypes = ctMethod.getParameterTypes();
+                exceptionTypes = ctMethod.getExceptionTypes();
+            } catch (NotFoundException innerException) {
+                throw new MojoExecutionException(ERROR_CODE + " On method compile: " + exception.getLocalizedMessage()
+                        + ". Did you add all the dependencies of this jar? Dependency:"
+                        + innerException.getLocalizedMessage());
             }
         }
 
-        final CtMethod m = CtNewMethod.make(generateConstructorMethod(toModify), toModify);
-        toModify.addMethod(m);
-        toModify.writeFile();
-        return toModify;
+        return CtNewMethod.make(toModify, "with" + entityName, parameterTypes, exceptionTypes,
+                generateBuilderMethodBody(entityName, parameterTypes.length), ctMethod.getDeclaringClass());
     }
 
-    private String generateConstructorMethod(CtClass toModify) {
+    private void generateBuilderConstructorMethod(CtClass toModify) throws MojoExecutionException {
+        CtMethod m;
+        try {
+            m = CtNewMethod.make(generateBuilderConstructorMethodBody(toModify), toModify);
+            toModify.addMethod(m);
+            toModify.writeFile();
+        } catch (Exception exception) {
+            throw new MojoExecutionException(ERROR_CODE, exception);
+        }
+    }
+
+    private String generateBuilderConstructorMethodBody(CtClass toModify) {
         StringBuilder constructorBuilder = new StringBuilder();
         constructorBuilder.append("public static synchronized ").append(toModify.getSimpleName()).append(" create() {");
         constructorBuilder.append("return new ").append(toModify.getSimpleName()).append("();").append("}");
         String constructorMethod = constructorBuilder.toString();
         return constructorMethod;
     }
+
+    private String generateBuilderMethodBody(String entityName, int parametersSize) {
+        StringBuilder constructorBuilder = new StringBuilder();
+        constructorBuilder.append("{");
+        constructorBuilder.append("this.set").append(entityName).append("(");
+        int index = 1;
+        constructorBuilder.append("$" + (index));
+        for (index = 2; index < parametersSize; index++) {
+            constructorBuilder.append(",$" + (index++));
+        }
+        constructorBuilder.append(");");
+        constructorBuilder.append("return this;");
+        constructorBuilder.append("}");
+        return constructorBuilder.toString();
+    }
+
 }

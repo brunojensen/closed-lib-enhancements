@@ -64,7 +64,6 @@ public class EnhaceableFileReplacer {
     private void writeRemainingEntries(final List<EnhanceableEntry> enhanceableEntries, JarFile originalJarFile,
             final JarOutputStream replacedJarFile) throws IOException {
         final Enumeration<JarEntry> entries = originalJarFile.entries();
-
         InputStream inputSream = null;
         while (entries.hasMoreElements()) {
             final JarEntry entry = entries.nextElement();
