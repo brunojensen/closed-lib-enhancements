@@ -37,6 +37,7 @@ public class ClosedBeanBuilderGeneratorMojo extends AbstractEnhancementMojo {
     private String artifactSuffix;
 
     private List<EnhanceableFile> enhanceableFiles = new ArrayList<EnhanceableFile>(0);
+
     private ClassPool classPool = new ClassPool(true);
 
     @Override
