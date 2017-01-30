@@ -18,17 +18,16 @@ public class BuilderEnhancement implements Enhancement {
 
     private Log log;
     private static final String ERROR_CODE = "[ERROR]";
+    private final ClassPool classPool;
 
-    public BuilderEnhancement(final Log log) {
+    public BuilderEnhancement(final Log log, final ClassPool classPool) {
         this.log = log;
+        this.classPool = classPool;
     }
 
     @Override
     public void enhance(final EnhanceableFile enhanceableFile) throws MojoExecutionException {
         try {
-            final ClassPool classPool = new ClassPool(true);
-            classPool.appendPathList(enhanceableFile.getName());
-            log.info("Enhanceable entries:");
             for (final EnhanceableEntry enhanceableEntry : enhanceableFile.getEntries()) {
                 log.info(enhanceableEntry.getCanonicalName());
                 final CtClass ctClass = classPool.get(enhanceableEntry.getCanonicalName());
@@ -47,7 +46,7 @@ public class BuilderEnhancement implements Enhancement {
     }
 
     private byte[] transformClass(CtClass ctClassToModify, ClassPool classPool) throws MojoExecutionException {
-        for (final CtMethod ctMethod : ctClassToModify.getMethods()) {
+        for (final CtMethod ctMethod : ctClassToModify.getDeclaredMethods()) {
             if (ctMethod.getName().startsWith("set")) {
                 String entityName = ctMethod.getName().substring(3);
                 CtMethod withMethod = null;
@@ -113,7 +112,7 @@ public class BuilderEnhancement implements Enhancement {
             }
         }
 
-        return CtNewMethod.make(toModify, "with" + entityName, parameterTypes, exceptionTypes,
+        return CtNewMethod.make(ctMethod.getDeclaringClass(), "with" + entityName, parameterTypes, exceptionTypes,
                 generateBuilderMethodBody(entityName, parameterTypes.length), ctMethod.getDeclaringClass());
     }
 

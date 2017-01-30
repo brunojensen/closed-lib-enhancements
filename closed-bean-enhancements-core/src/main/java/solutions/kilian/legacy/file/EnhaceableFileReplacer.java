@@ -6,7 +6,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
@@ -64,11 +66,11 @@ public class EnhaceableFileReplacer {
     private void writeRemainingEntries(final List<EnhanceableEntry> enhanceableEntries, JarFile originalJarFile,
             final JarOutputStream replacedJarFile) throws IOException {
         final Enumeration<JarEntry> entries = originalJarFile.entries();
+        final Set<String> uniqueEntries = new HashSet<String>(0);
         InputStream inputSream = null;
         while (entries.hasMoreElements()) {
             final JarEntry entry = entries.nextElement();
-
-            if (!enhanceableEntries.contains(new EnhanceableEntry(entry))) {
+            if (!uniqueEntries.contains(entry.getName()) && !enhanceableEntries.contains(new EnhanceableEntry(entry))) {
                 inputSream = originalJarFile.getInputStream(entry);
                 replacedJarFile.putNextEntry(entry);
                 int bytesRead = 0;
@@ -76,6 +78,7 @@ public class EnhaceableFileReplacer {
                     replacedJarFile.write(READER_BUFFER, 0, bytesRead);
                 }
             }
+            uniqueEntries.add(entry.getName());
         }
 
         if (inputSream != null) {

@@ -1,5 +1,6 @@
 package solutions.kilian.legacy.entry;
 
+import java.util.Arrays;
 import java.util.jar.JarEntry;
 import java.util.zip.ZipEntry;
 
@@ -43,16 +44,21 @@ public class EnhanceableEntry extends JarEntry {
     }
 
     @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + Arrays.hashCode(byteCode);
+        return result;
+    }
+
+    @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
+        if (this == obj)
             return true;
-        }
-        if (obj == null) {
+        if (obj == null)
             return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (getClass() != obj.getClass())
             return false;
-        }
         final EnhanceableEntry other = (EnhanceableEntry) obj;
         return super.getName().equals(other.getName());
     }

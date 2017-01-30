@@ -14,6 +14,8 @@ import org.sonatype.aether.artifact.Artifact;
 import org.sonatype.aether.resolution.ArtifactResult;
 import org.sonatype.aether.util.artifact.DefaultArtifact;
 
+import javassist.ClassPool;
+import javassist.NotFoundException;
 import solutions.kilian.legacy.enhancement.BuilderEnhancement;
 import solutions.kilian.legacy.enhancement.Enhancement;
 import solutions.kilian.legacy.file.EnhaceableFileReplacer;
@@ -32,28 +34,42 @@ public class ClosedBeanBuilderGeneratorMojo extends AbstractEnhancementMojo {
     @Parameter(defaultValue = "enhanced", alias = "artifact-suffix")
     private String artifactSuffix;
 
+    private List<EnhanceableFile> enhanceableFiles = new ArrayList<EnhanceableFile>(0);
+    private ClassPool classPool = new ClassPool(true);
+
     @Override
     public void execute() throws MojoExecutionException {
         for (final ClosedArtifact closedArtifact : closedArtifacts) {
-            final ArtifactResult artifactResult = resolve(closedArtifact.artifact());
-            Artifact originalArtifact = artifactResult.getArtifact();
-            getLog().info("Enhancing artifact: " + originalArtifact.getArtifactId());
-
-            EnhanceableFile enhanceableFile = null;
+            Artifact originalArtifact = resolveOriginalArtifact(closedArtifact);
             try {
-                enhanceableFile = new EnhanceableFile(originalArtifact.getFile(), exclusions);
+                classPool.appendPathList(originalArtifact.getFile().getPath());
+                enhanceableFiles.add(new EnhanceableFile(originalArtifact, exclusions));
                 info("Exclusions:", exclusions);
-            } catch (final IOException ioException) {
-                getLog().error(ioException);
+            } catch (final IOException exception) {
+                throw new MojoExecutionException("[ERROR]", exception);
+            } catch (NotFoundException exception) {
+                throw new MojoExecutionException("[ERROR]", exception);
             }
-
-            Enhancement enhancement = new BuilderEnhancement(getLog());
-            enhancement.enhance(enhanceableFile);
-
-            Artifact generatedArtifact = generateEnhancedArtifact(originalArtifact,
-                    generateFileWithEntries(originalArtifact, enhanceableFile));
-            publish(generatedArtifact);
         }
+
+        final Enhancement enhancement = new BuilderEnhancement(getLog(), classPool);
+        for (final EnhanceableFile enhanceableFile : enhanceableFiles) {
+            enhancement.enhance(enhanceableFile);
+        }
+
+        for (final EnhanceableFile enhanceableFile : enhanceableFiles) {
+            File enhancedFile = generateFileWithEntries(enhanceableFile.getOriginalArtifact(), enhanceableFile);
+            Artifact generatedArtifact = generateEnhancedArtifact(enhanceableFile.getOriginalArtifact(), enhancedFile);
+            publish(generatedArtifact);
+            enhancedFile.delete();
+        }
+    }
+
+    private Artifact resolveOriginalArtifact(final ClosedArtifact closedArtifact) throws MojoExecutionException {
+        final ArtifactResult artifactResult = resolve(closedArtifact.artifact());
+        Artifact originalArtifact = artifactResult.getArtifact();
+        getLog().info("Enhancing artifact: " + originalArtifact.getArtifactId());
+        return originalArtifact;
     }
 
     private File generateFileWithEntries(Artifact originalArtifact, EnhanceableFile enhanceableFile)
