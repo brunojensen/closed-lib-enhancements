@@ -25,6 +25,8 @@ import solutions.kilian.legacy.parameter.ClosedArtifact;
 @Mojo(name = "generate")
 public class ClosedBeanBuilderGeneratorMojo extends AbstractEnhancementMojo {
 
+    private static final String ERROR_CODE = "[ERROR]";
+
     @Parameter(alias = "closed-artifacts")
     private List<ClosedArtifact> closedArtifacts = new ArrayList<ClosedArtifact>();
 
@@ -39,16 +41,19 @@ public class ClosedBeanBuilderGeneratorMojo extends AbstractEnhancementMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
+        info("Exclusions:", exclusions);
+
         for (final ClosedArtifact closedArtifact : closedArtifacts) {
             Artifact originalArtifact = resolveOriginalArtifact(closedArtifact);
             try {
                 classPool.appendPathList(originalArtifact.getFile().getPath());
-                enhanceableFiles.add(new EnhanceableFile(originalArtifact, exclusions));
-                info("Exclusions:", exclusions);
+                if (!closedArtifact.isDependency()) {
+                    enhanceableFiles.add(new EnhanceableFile(originalArtifact, exclusions));
+                }
             } catch (final IOException exception) {
-                throw new MojoExecutionException("[ERROR]", exception);
+                throw new MojoExecutionException(ERROR_CODE, exception);
             } catch (NotFoundException exception) {
-                throw new MojoExecutionException("[ERROR]", exception);
+                throw new MojoExecutionException(ERROR_CODE, exception);
             }
         }
 

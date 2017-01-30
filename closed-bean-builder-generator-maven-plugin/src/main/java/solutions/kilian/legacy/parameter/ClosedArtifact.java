@@ -6,6 +6,7 @@ public class ClosedArtifact {
     private String groupId;
     private String artifactId;
     private String version;
+    private boolean dependency;
 
     public String getGroupId() {
         return groupId;
@@ -33,6 +34,14 @@ public class ClosedArtifact {
 
     public DefaultArtifact artifact() {
         return new DefaultArtifact(groupId + ":" + artifactId + ":" + this.version);
+    }
+
+    public boolean isDependency() {
+        return dependency;
+    }
+
+    public void setDependency(boolean dependency) {
+        this.dependency = dependency;
     }
 
 }

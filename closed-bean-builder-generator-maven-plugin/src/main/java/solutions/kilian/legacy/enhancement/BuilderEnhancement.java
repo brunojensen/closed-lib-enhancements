@@ -14,15 +14,14 @@ import javassist.NotFoundException;
 import solutions.kilian.legacy.entry.EnhanceableEntry;
 import solutions.kilian.legacy.file.EnhanceableFile;
 
-public class BuilderEnhancement implements Enhancement {
+public class BuilderEnhancement extends AbstractEnhancement {
 
-    private Log log;
+    private final Log log;
     private static final String ERROR_CODE = "[ERROR]";
-    private final ClassPool classPool;
 
     public BuilderEnhancement(final Log log, final ClassPool classPool) {
+        super(classPool);
         this.log = log;
-        this.classPool = classPool;
     }
 
     @Override
@@ -30,11 +29,11 @@ public class BuilderEnhancement implements Enhancement {
         try {
             for (final EnhanceableEntry enhanceableEntry : enhanceableFile.getEntries()) {
                 log.info(enhanceableEntry.getCanonicalName());
-                final CtClass ctClass = classPool.get(enhanceableEntry.getCanonicalName());
+                final CtClass ctClass = getClassPool().get(enhanceableEntry.getCanonicalName());
                 byte[] bytecode = null;
                 if (!ctClass.isEnum() && !ctClass.isInterface() && !ctClass.isPrimitive()) {
-                    importPackage(classPool, ctClass.getPackageName());
-                    bytecode = transformClass(ctClass, classPool);
+                    importPackage(getClassPool(), ctClass.getPackageName());
+                    bytecode = transformClass(ctClass, getClassPool());
                 } else {
                     bytecode = ctClass.toBytecode();
                 }
