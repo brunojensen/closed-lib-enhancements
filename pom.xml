@@ -2,15 +2,15 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>solutions.kilian.legacy</groupId>
-	<artifactId>closed-bean-enhancements</artifactId>
+	<artifactId>closed-lib-enhancements</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<url>http://kilian.solutions</url>
 
 	<modules>
-		<module>closed-bean-enhancements-core</module>
-		<module>closed-bean-builder-generator-maven-plugin</module>
+		<module>closed-lib-enhancements-core</module>
+		<module>closed-lib-builder-maven-plugin</module>
 	</modules>
 
 	<build>
