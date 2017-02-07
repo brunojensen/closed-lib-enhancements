@@ -47,17 +47,17 @@ public class BuilderEnhancement extends AbstractEnhancement {
     private byte[] transformClass(CtClass ctClassToModify, ClassPool classPool) throws MojoExecutionException {
         for (final CtMethod ctMethod : ctClassToModify.getDeclaredMethods()) {
             if (ctMethod.getName().startsWith("set")) {
-                String entityName = ctMethod.getName().substring(3);
+                final String entityName = ctMethod.getName().substring(3);
                 CtMethod withMethod = null;
                 try {
                     withMethod = generateMethodBodyWithBuilder(classPool, ctClassToModify, ctMethod, entityName);
-                } catch (Exception exception) {
+                } catch (final Exception exception) {
                     throw new MojoExecutionException(ERROR_CODE, exception);
                 }
 
                 try {
                     ctClassToModify.addMethod(withMethod);
-                } catch (CannotCompileException exception) {
+                } catch (final CannotCompileException exception) {
                     throw new MojoExecutionException(ERROR_CODE, exception);
                 }
             }
@@ -67,7 +67,7 @@ public class BuilderEnhancement extends AbstractEnhancement {
         byte[] bytecode = null;
         try {
             bytecode = ctClassToModify.toBytecode();
-        } catch (Exception exception) {
+        } catch (final Exception exception) {
             throw new MojoExecutionException(ERROR_CODE, exception);
         }
         return bytecode;
@@ -75,9 +75,9 @@ public class BuilderEnhancement extends AbstractEnhancement {
 
     private void importPackage(ClassPool classPool, String packageName) {
         @SuppressWarnings("unchecked")
-        Iterator<String> importedPackages = classPool.getImportedPackages();
+        final Iterator<String> importedPackages = classPool.getImportedPackages();
         while (importedPackages.hasNext()) {
-            String next = (String) importedPackages.next();
+            final String next = importedPackages.next();
             if (next.equals(packageName)) {
                 return;
             }
@@ -86,8 +86,8 @@ public class BuilderEnhancement extends AbstractEnhancement {
     }
 
     private String packageName(NotFoundException exception) {
-        String notImportedPackageName = exception.getLocalizedMessage();
-        String[] splittedName = notImportedPackageName.split("\\.");
+        final String notImportedPackageName = exception.getLocalizedMessage();
+        final String[] splittedName = notImportedPackageName.split("\\.");
         return notImportedPackageName.substring(0,
                 notImportedPackageName.indexOf(splittedName[splittedName.length - 1]) - 1);
     }
@@ -99,12 +99,12 @@ public class BuilderEnhancement extends AbstractEnhancement {
         try {
             parameterTypes = ctMethod.getParameterTypes();
             exceptionTypes = ctMethod.getExceptionTypes();
-        } catch (NotFoundException exception) {
+        } catch (final NotFoundException exception) {
             classPool.importPackage(packageName(exception));
             try {
                 parameterTypes = ctMethod.getParameterTypes();
                 exceptionTypes = ctMethod.getExceptionTypes();
-            } catch (NotFoundException innerException) {
+            } catch (final NotFoundException innerException) {
                 throw new MojoExecutionException(ERROR_CODE + " On method compile: " + exception.getLocalizedMessage()
                         + ". Did you add all the dependencies of this jar? Dependency:"
                         + innerException.getLocalizedMessage());
@@ -121,27 +121,27 @@ public class BuilderEnhancement extends AbstractEnhancement {
             m = CtNewMethod.make(generateBuilderConstructorMethodBody(toModify), toModify);
             toModify.addMethod(m);
             toModify.writeFile();
-        } catch (Exception exception) {
+        } catch (final Exception exception) {
             throw new MojoExecutionException(ERROR_CODE, exception);
         }
     }
 
     private String generateBuilderConstructorMethodBody(CtClass toModify) {
-        StringBuilder constructorBuilder = new StringBuilder();
+        final StringBuilder constructorBuilder = new StringBuilder();
         constructorBuilder.append("public static synchronized ").append(toModify.getSimpleName()).append(" create() {");
         constructorBuilder.append("return new ").append(toModify.getSimpleName()).append("();").append("}");
-        String constructorMethod = constructorBuilder.toString();
+        final String constructorMethod = constructorBuilder.toString();
         return constructorMethod;
     }
 
     private String generateBuilderMethodBody(String entityName, int parametersSize) {
-        StringBuilder constructorBuilder = new StringBuilder();
+        final StringBuilder constructorBuilder = new StringBuilder();
         constructorBuilder.append("{");
         constructorBuilder.append("this.set").append(entityName).append("(");
         int index = 1;
-        constructorBuilder.append("$" + (index));
+        constructorBuilder.append("$" + index);
         for (index = 2; index < parametersSize; index++) {
-            constructorBuilder.append(",$" + (index++));
+            constructorBuilder.append(",$" + index++);
         }
         constructorBuilder.append(");");
         constructorBuilder.append("return this;");

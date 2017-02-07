@@ -45,7 +45,7 @@ public class ClosedBeanBuilderGeneratorMojo extends AbstractEnhancementMojo {
         info("Exclusions:", exclusions);
 
         for (final ClosedArtifact closedArtifact : closedArtifacts) {
-            Artifact originalArtifact = resolveOriginalArtifact(closedArtifact);
+            final Artifact originalArtifact = resolveOriginalArtifact(closedArtifact);
             try {
                 classPool.appendPathList(originalArtifact.getFile().getPath());
                 if (!closedArtifact.isDependency()) {
@@ -53,7 +53,7 @@ public class ClosedBeanBuilderGeneratorMojo extends AbstractEnhancementMojo {
                 }
             } catch (final IOException exception) {
                 throw new MojoExecutionException(ERROR_CODE, exception);
-            } catch (NotFoundException exception) {
+            } catch (final NotFoundException exception) {
                 throw new MojoExecutionException(ERROR_CODE, exception);
             }
         }
@@ -64,8 +64,9 @@ public class ClosedBeanBuilderGeneratorMojo extends AbstractEnhancementMojo {
         }
 
         for (final EnhanceableFile enhanceableFile : enhanceableFiles) {
-            File enhancedFile = generateFileWithEntries(enhanceableFile.getOriginalArtifact(), enhanceableFile);
-            Artifact generatedArtifact = generateEnhancedArtifact(enhanceableFile.getOriginalArtifact(), enhancedFile);
+            final File enhancedFile = generateFileWithEntries(enhanceableFile.getOriginalArtifact(), enhanceableFile);
+            final Artifact generatedArtifact =
+                    generateEnhancedArtifact(enhanceableFile.getOriginalArtifact(), enhancedFile);
             publish(generatedArtifact);
             enhancedFile.delete();
         }
@@ -73,25 +74,26 @@ public class ClosedBeanBuilderGeneratorMojo extends AbstractEnhancementMojo {
 
     private Artifact resolveOriginalArtifact(final ClosedArtifact closedArtifact) throws MojoExecutionException {
         final ArtifactResult artifactResult = resolve(closedArtifact.artifact());
-        Artifact originalArtifact = artifactResult.getArtifact();
+        final Artifact originalArtifact = artifactResult.getArtifact();
         getLog().info("Enhancing artifact: " + originalArtifact.getArtifactId());
         return originalArtifact;
     }
 
     private File generateFileWithEntries(Artifact originalArtifact, EnhanceableFile enhanceableFile)
             throws MojoExecutionException {
-        final EnhaceableFileReplacer replacer = new EnhaceableFileReplacer(
-                originalArtifact.getArtifactId() + "-" + artifactSuffix);
+        final EnhaceableFileReplacer replacer =
+                new EnhaceableFileReplacer(originalArtifact.getArtifactId() + "-" + artifactSuffix);
         final File file = replacer.replace(originalArtifact.getFile(), enhanceableFile.getEntries());
         return file;
     }
 
     private Artifact generateEnhancedArtifact(final Artifact originalArtifact, final File file)
             throws MojoExecutionException {
-        DefaultArtifact defaultArtifact = new DefaultArtifact(originalArtifact.getGroupId(),
-                originalArtifact.getArtifactId() + "-" + artifactSuffix, originalArtifact.getExtension(),
-                originalArtifact.getVersion());
-        Artifact artifact = defaultArtifact.setFile(file);
+        final DefaultArtifact defaultArtifact =
+                new DefaultArtifact(originalArtifact.getGroupId() + "-" + artifactSuffix,
+                        originalArtifact.getArtifactId() + "-" + artifactSuffix, originalArtifact.getExtension(),
+                        originalArtifact.getVersion());
+        final Artifact artifact = defaultArtifact.setFile(file);
         return artifact;
     }
 
