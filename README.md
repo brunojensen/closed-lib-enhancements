@@ -56,3 +56,6 @@ Add the "enhanced" artifact to your pom:
 ### Sample Project ###
 
 You can use the sample and closed-jar-sample projects to lear more about the plugin execution.
+
+
+
